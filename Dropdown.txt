@@ -1,0 +1,70 @@
+================================================================================ Dropdown =======================================================================
+
+#### **1) Define Method for Populating Dropdown**  
+- The method `QuizUserDropDown()` fetches user data from the database and stores it in `ViewBag` to populate a dropdown list in the view.
+
+#### **2) Establish Database Connection**  
+```csharp
+string connectionString = configuration.GetConnectionString("ConnectionString");
+SqlConnection connection = new SqlConnection(connectionString);
+connection.Open();
+```
+- Retrieves the database connection string from the configuration file.  
+- Opens a connection to the database.
+
+#### **3) Execute Stored Procedure**  
+```csharp
+   SqlCommand command = connection.CreateCommand();
+   command.CommandType = CommandType.StoredProcedure;
+   command.CommandText = "Dropdown_MST_User";
+   SqlDataReader reader = command.ExecuteReader();
+```
+- Creates a `SqlCommand` object to execute the stored procedure `Dropdown_MST_User`.  
+- `SqlDataReader` reads the retrieved data.
+
+#### **4) Store Data in DataTable**  
+```csharp
+DataTable dataTable = new DataTable();
+dataTable.Load(reader);
+```
+- Loads the retrieved data into a `DataTable`.
+
+#### **5) Convert DataTable to List**  
+```csharp
+List<UserDropdownModel> list = new List<UserDropdownModel>();
+foreach (DataRow data in dataTable.Rows)
+{
+    UserDropdownModel model = new UserDropdownModel();
+    model.UserID = Convert.ToInt32(data["UserID"]);
+    model.UserName = data["UserName"].ToString();
+    list.Add(model);
+}
+```
+- Iterates through each row in `DataTable`.  
+- Creates `UserDropdownModel` objects and adds them to a list.
+
+#### **6) Store Data in `ViewBag`**  
+```csharp
+ViewBag.User = list;
+```
+- Stores the user list in `ViewBag`, making it accessible in the view.
+
+---
+
+### **How to Use in View (`.cshtml`)**
+```html
+<select name="UserID" class="form-control">
+    <option value="">-- Select User --</option>
+    @foreach (var item in ViewBag.User)
+    {
+        <option value="@item.UserID">@item.UserName</option>
+    }
+</select>
+```
+- Uses `ViewBag.User` to populate the dropdown dynamically.  
+- `option` values are set based on `UserID` and `UserName`.
+
+✅ **Advantages**  
+- Keeps the controller lightweight by using a stored procedure.  
+- Avoids hardcoding dropdown values.  
+- Uses `ViewBag`, making it easy to implement in the view.

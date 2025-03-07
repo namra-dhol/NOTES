@@ -1,0 +1,72 @@
+===============curd in .net============================
+
+1) step - 1  define IConfiguration configuration -------------{provide a access to appsetting.json} 
+
+2) step - 2  define constructor for the QuizController class  ---------{It follows Dependency Injection (DI) to inject configuration settings into the controller}
+
+3) step - 3  : for SelectAll OR List page 
+
+	1. define action method  eg:- public IActionResult List()
+
+	2. -------establish connection ------------------------
+	   string connectionString = this.Configuration.GetConnectionString("ConnectionString");
+	   SqlConnection connection = new SqlConnection(connectionString);
+	   connection.Open();
+
+	3. ---connection.CreateCommand() creates a new SqlCommand object associated with an existing SqlConnection.
+		* eg : - SqlCommand command = connection.CreateCommand();
+
+	4. -- By default, SqlCommand executes SQL text queries.
+		* eg : - command.CommandType = CommandType.StoredProcedure; tells SQL Server to execute a stored procedure instead of a raw SQL query.{for Queary CommandType.text }
+
+	5. --  command.CommandText = "PR_Quiz_SelectAll";  {When this command executes, it will call the PR_Quiz_SelectAll stored procedure}
+
+
+	6. --   SqlDataReader reader = command.ExecuteReader();  
+		DataTable table = new DataTable();
+		table.Load(reader);
+		return View(table);
+		
+			
+		{This code executes a SQL query (or stored procedure), loads the result into a DataTable, and passes it to the MVC View for display.}
+	
+		
+		*eg : - SqlDataReader reader = command.ExecuteReader();  ----------{ExecuteReader() runs the SQL query or stored procedure. It returns a SqlDataReader, which is a forward-											only, read-only stream of rows from the database.}
+
+
+		* eg : -     	DataTable table = new DataTable();     -----------{A DataTable is a structured in-memory table that holds the results.
+				table.Load(reader);		                         table.Load(reader); reads all rows from SqlDataReader and stores them in DataTable.}
+
+
+
+
+		*eg : - return View(table);      --------------------------------{Passes the DataTable to an MVC View, where it can be displayed using Razor syntax.}
+		
+
+	for the views :
+		@model DataTable
+		@using System.Data
+
+		<table class="table">
+  			  <thead>
+      				  <tr>
+         				   <th>Fields</th>
+            
+      				  </tr>
+   			 </thead>
+   			 <tbody>
+    				    @foreach (DataRow row in Model.Rows)
+      				  {
+        				    <tr>
+           					     <td>@row["Fields"]</td>
+                        		  </tr>
+      				  }
+  			  </tbody>
+		</table>	
+
+
+
+
+
+
+

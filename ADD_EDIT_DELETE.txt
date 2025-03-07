@@ -1,0 +1,227 @@
+===========================   Notes  ==========================================
+
+
+Method	                Description
+ExecuteReader()	        Used for SELECT queries, returns a SqlDataReader object.
+ExecuteScalar()	        Returns a single value (first column, first row).
+ExecuteNonQuery()	Executes INSERT, UPDATE, DELETE queries (returns affected rows count).
+
+
+
+****** for edit you need to pass action method = AddQuiz
+****** for add you need to pass action method == QuizSave 
+****** also you need to pass Id in form as hidden 
+
+
+
+============================   this load Exiting Quiz for Edit  ============================================
+
+1)  Define Action Method and Pass ID
+This method loads quiz details when editing an existing quiz.
+It fetches quiz details from the database using QuizID and fills the QuizModel. 
+
+      *eg: -   public IActionResult QuizSave(QuizModel model)  {Passing a model (QuizModel) when inserting data in an ASP.NET Core MVC application                           				                                                                         helps ensure data structure, validation, maintainability, and security.}
+
+if you don't pass  model you need to specify public IActionResult QuizSave(string title, string description, DateTime createdAt) 
+
+
+
+
+
+2) 3)  -------establish connection & create command type and text ------------------------
+	   string connectionString = this.Configuration.GetConnectionString("ConnectionString");
+	   SqlConnection connection = new SqlConnection(connectionString);
+	   connection.Open();
+	   SqlCommand command = connection.CreateCommand();
+      	   command.CommandType = CommandType.StoredProcedure;
+	   command.CommandText = "PR_MST_Quiz_SelectByID";
+
+4) Add Parameters
+   Adds the QuizID parameter to fetch a specific quiz.
+   Uses command.Parameters.AddWithValue() for safe SQL execution.
+
+               *eg :-   command.Parameters.AddWithValue("@QuizID", QuizID);
+
+5) Execute Command and Load Data
+   Executes the SQL command and reads data using SqlDataReader.
+   Loads data into a DataTable and maps it to the QuizModel.   
+
+
+		                    SqlDataReader reader = command.ExecuteReader();
+					DataTable datatable = new DataTable();
+					datatable.Load(reader);
+					QuizModel model = new QuizModel();
+
+					foreach (DataRow row in datatable.Rows)
+					{
+  					  model.QuizId = Convert.ToInt32(row["QuizID"]);
+  					  model.QuizName = row["QuizName"].ToString();
+   					  model.TotalQuestions = Convert.ToInt32(row["TotalQuestions"]);
+   					 model.QuizDate = Convert.ToDateTime(row["QuizDate"]);
+    						model.UserID = Convert.ToInt32(row["UserID"]);
+					}
+
+6) Load Dropdown Data and Return View
+			Calls QuizUserDropDown() (assumed to populate dropdowns in the UI).
+			Returns the "AddQuiz" view with the quiz details.
+
+
+----------------------------------------- Insert/Update Quiz (QuizSave Method) -------------------------------------------------------------------
+
+1) Define Action Method
+		Handles both Insert & Update based on QuizId.
+		Uses ModelState.IsValid to check form validation.
+
+        public IActionResult QuizSave(QuizModel model)
+
+
+2)  Validate Model and Establish Connection
+    Checks if model data is valid before executing SQL.
+    Opens a database connection. 
+       
+           if (ModelState.IsValid)
+      {
+   	 string connectionString = this.configuration.GetConnectionString("connectionString");
+    	SqlConnection connection = new SqlConnection(connectionString);
+    	connection.Open();
+
+
+3)  Create SQL Command and Determine Insert/Update
+    Uses a stored procedure for Insert (PR_MST_Quiz_Insert) if QuizId == 0.
+    Uses a stored procedure for Update (PR_MST_Quiz_Update) if QuizId > 0.
+
+
+SqlCommand command = connection.CreateCommand();
+command.CommandType = CommandType.StoredProcedure;
+
+if (model.QuizId == 0)
+{
+    command.CommandText = "PR_MST_Quiz_Insert";
+}
+else
+{
+    command.CommandText = "PR_MST_Quiz_Update";
+    command.Parameters.Add("@QuizID", SqlDbType.Int).Value = model.QuizId;
+}
+
+													
+4) Add SQL Parameters for Insert/Update
+   Adds quiz-related parameters to the command.
+   Uses command.Parameters.Add() to prevent SQL injection.
+
+	command.Parameters.Add("@QuizName", SqlDbType.VarChar).Value = model.QuizName;
+        command.Parameters.Add("@TotalQuestions", SqlDbType.Int).Value = model.TotalQuestions;
+        command.Parameters.Add("@QuizDate", SqlDbType.DateTime).Value = model.QuizDate;
+        command.Parameters.Add("@UserID", SqlDbType.Int).Value = model.UserID;
+
+5) Execute Query and Redirect
+Executes the command to insert or update the quiz.
+Redirects the user to the QuizList page after saving.
+
+command.ExecuteNonQuery();
+return RedirectToAction("QuizList");
+
+if (ModelState.IsValid)
+     {
+         return RedirectToAction("QuizList");
+     }
+     QuizUserDropDown();
+     return View("AddQuiz", model);
+ }
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===========================  DELETE =============================================
+
+1)  define action method and pass id   *eg : -  public IActionResult QuizDelete(int QuizID)
+
+2)  -------establish connection ------------------------
+	   string connectionString = this.Configuration.GetConnectionString("ConnectionString");
+	   SqlConnection connection = new SqlConnection(connectionString);
+	   connection.Open();
+
+
+3) ---------create command type and text ----------------
+	   SqlCommand command = connection.CreateCommand();
+      	   command.CommandType = CommandType.StoredProcedure;
+       	   command.CommandText = "PR_Quiz_Delete";
+
+
+4)---------- add parameter -----------------------------
+
+		 command.Parameters.Add("@QuizID", SqlDbType.Int).Value = QuizID; --{This line adds a parameter to a SQL DELETE command to ensure security, efficiency, and correctness.}
+        	 command.ExecuteNonQuery();  ----------------------------------------------{Notes}
+		 	 return RedirectToAction("QuizList");  {after delete redirect to List page }
+
+5) -----------------extra for catch error useful for FK constarin if use use try catch block -------------
+
+			  TempData["SuccessMessage"] = "table QuizList deleted successfully.";
+ 			 return RedirectToAction("QuizList");  
+
+catch (Exception ex)
+   {
+       TempData["ErrorMessage"] = "An error occurred while deleting the Quiz: " + ex.Message;
+       return RedirectToAction("QuizList");
+   }
+
+
+
+for delete View 
+
+<form method="post" asp-controller="Product" asp-action="ProductDelete">
+  <input type="hidden" name="ProductID" value="@dataRow["ProductID"]" />
+  <button type="submit" class="btn btn-outline-danger btn-xs">
+    <i class="bi bi-x"></i>
+  </button>
+</form>
+```
+
+Another way to add a delete link is to use an anchor tag with a `href` attribute that points to the `ProductDelete` action method. This method will be called when the user clicks the link.
+
+```html
+<a href="/Product/ProductDelete?ProductID=@dataRow["ProductID"]" class="btn btn-outline-danger btn-xs">
+  <i class="bi bi-x"></i>
+</a>
+
+```
+
+using the `asp-route-` attribute:
+
+```html
+<a asp-controller="Product" asp-action="ProductDelete" asp-route-ProductID="@dataRow["ProductID"]" class="btn btn-outline-danger btn-xs">
+  <i class="bi bi-x"></i>
+</a>
+
+
+
+<span class="text-danger">@TempData["ErrorMessage"]</span>

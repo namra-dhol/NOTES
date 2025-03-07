@@ -1,0 +1,63 @@
+================================ flow of insert =======================================================
+
+if (model.QuizId == 0)
+{
+    command.CommandText = "PR_MST_Quiz_Insert";
+}
+else
+{
+    command.CommandText = "PR_MST_Quiz_Update";
+    command.Parameters.Add("@QuizID", SqlDbType.Int).Value = model.QuizId;
+}
+
+
+1️⃣ Insert (New Quiz)
+✅ When a new quiz is created, QuizId == 0.
+✅ The method does not set @QuizID because the database will auto-generate it.
+✅ It calls the "PR_MST_Quiz_Insert" stored procedure.
+
+Example Scenario:
+The user fills out a form with quiz details and clicks "Save".
+Since it’s a new quiz, QuizId == 0, so PR_MST_Quiz_Insert is executed.
+The database automatically generates a new QuizID (Primary Key).
+
+
+
+Flow:
+User clicks "Add Quiz" → QuizId is 0.
+The system runs "PR_MST_Quiz_Insert" (inserts new quiz).
+The database assigns a new unique QuizID.
+The user is redirected to QuizList.
+
+
+
+2️⃣ Update (Editing an Existing Quiz)
+✅ When editing a quiz, QuizId > 0 (already exists in DB).
+✅ The method adds @QuizID as a parameter to update the correct record.
+✅ It calls "PR_MST_Quiz_Update" to modify an existing quiz.
+
+Example Scenario:
+The user edits an existing quiz with QuizId = 5.
+Since QuizId > 0, the system runs "PR_MST_Quiz_Update".
+The database updates the quiz with ID = 5 instead of creating a new one.
+
+Flow:
+User selects a quiz with QuizId = 5 and clicks "Edit".
+The system runs "PR_MST_Quiz_Update" with QuizId = 5.
+The existing quiz is updated with new values.
+The user is redirected to QuizList.
+
+
+Summary
+Scenario	  QuizId Value	Command Executed	What Happens?
+Insert (New Quiz)	0	"PR_MST_Quiz_Insert"	Adds a new quiz, DB generates QuizId.
+Update (Edit Quiz)	> 0	"PR_MST_Quiz_Update"	Updates existing quiz using QuizId.
+
+
+Key Takeaways
+Insert happens when QuizId == 0, so a new quiz is created, and the database assigns an ID.
+Update happens when QuizId > 0, so an existing quiz is modified.
+The database handles QuizID for new inserts (usually with IDENTITY(1,1) in SQL Server).
+The user does NOT manually enter QuizID, it's either:
+Auto-generated for new quizzes.
+Retrieved from the database for edits.
